@@ -22,11 +22,9 @@ export class ProjectsService {
   }
 
   async findAll(user: User): Promise<Project[]> {
-    // Si es superadmin, devuelve todos los proyectos
     if (user.role === 'superadmin') {
       return await this.projectRepository.find({ relations: ['user'] });
     }
-    // Si es usuario normal, solo sus proyectos
     return await this.projectRepository.find({
       where: { userId: user.id },
     });
@@ -42,7 +40,6 @@ export class ProjectsService {
       throw new NotFoundException(`Proyecto con ID ${id} no encontrado`);
     }
 
-    // Verificar permisos: solo el dueño o superadmin pueden ver el proyecto
     if (project.userId !== user.id && user.role !== 'superadmin') {
       throw new ForbiddenException('No tienes permiso para ver este proyecto');
     }
@@ -53,7 +50,6 @@ export class ProjectsService {
   async update(id: string, updateProjectDto: UpdateProjectDto, user: User): Promise<Project> {
     const project = await this.findOne(id, user);
 
-    // Verificar permisos: solo el dueño o superadmin pueden actualizar
     if (project.userId !== user.id && user.role !== 'superadmin') {
       throw new ForbiddenException('No tienes permiso para modificar este proyecto');
     }
@@ -65,7 +61,6 @@ export class ProjectsService {
   async remove(id: string, user: User): Promise<void> {
     const project = await this.findOne(id, user);
 
-    // Verificar permisos: solo el dueño o superadmin pueden eliminar
     if (project.userId !== user.id && user.role !== 'superadmin') {
       throw new ForbiddenException('No tienes permiso para eliminar este proyecto');
     }

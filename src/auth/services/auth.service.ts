@@ -37,7 +37,6 @@ export class AuthService {
     });
     await this.users.save(user);
 
-    
     const { password, ...safe } = user;
     const token = this.signToken(user);
 
@@ -47,7 +46,6 @@ export class AuthService {
   async login(dto: LoginDto) {
     const email = dto.email.toLowerCase().trim();
 
-   
     const user = await this.users.findOne({ where: { email } });
     if (!user) throw new UnauthorizedException('Credenciales inválidas');
     if (!user.isActive) throw new UnauthorizedException('Cuenta desactivada');
@@ -61,7 +59,6 @@ export class AuthService {
   }
 
   async check(user: User) {
-   
     const token = this.signToken(user);
     return { user, token };
   }

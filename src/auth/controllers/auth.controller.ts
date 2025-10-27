@@ -20,8 +20,7 @@ export class AuthController {
     return this.auth.login(dto);
   }
 
-  
-  @Auth() 
+  @Auth()
   @Get('check')
   check(@GetUser() user: User) {
     return this.auth.check(user);
