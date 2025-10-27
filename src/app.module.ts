@@ -1,13 +1,35 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ProjectsModule } from './projects/projects.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 
 @Module({
-  imports: [UsersModule, TasksModule, ProjectsModule, AuthModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+  
+    
+    TypeOrmModule.forRoot({
+    type: 'postgres',
+    url: process.env.DATABASE_URL,
+    autoLoadEntities: true,
+    synchronize: true,
+    }),
+
+    UsersModule,
+    TasksModule,
+    ProjectsModule,
+    AuthModule,
+  ],
   controllers: [],
   providers: [],
+  
 })
-export class AppModule {}
+export class AppModule {
+  constructor() {
+    console.log('Database URL:', process.env.DATABASE_URL);
+  }
+}
