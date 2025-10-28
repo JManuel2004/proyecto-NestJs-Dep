@@ -12,7 +12,7 @@ export class AuthController {
 
   @Post('register')
   register(@Body() dto: CreateUserDto) {
-    return this.auth.register(dto);
+    return this.auth.create(dto);
   }
 
   @Post('login')
@@ -25,4 +25,6 @@ export class AuthController {
   check(@GetUser() user: User) {
     return this.auth.check(user);
   }
+
+  
 }

@@ -1,65 +1,112 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { JwtService } from '@nestjs/jwt';
 
-import { User } from '../../users/entities/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginDto } from '../dto/login.dto';
 import { Jwt } from '../interfaces/jwt.interface';
+import { User } from '../../users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
+  private logger = new Logger('AuthService');
+
   constructor(
     @InjectRepository(User)
-    private readonly users: Repository<User>,
+    private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
 
-  private signToken(user: User) {
-    const payload: Jwt = { id: user.id, email: user.email, role: user.role };
-    return this.jwtService.sign(payload);
+
+  async create(createUserDto: CreateUserDto) {
+    const { password, role, ...userData } = createUserDto;
+
+    try {
+      const user = this.userRepository.create({
+        ...userData,
+        role: role ?? 'usuario',
+        isActive: true,
+        password: this.encryptPassword(password),
+      });
+
+      await this.userRepository.save(user);
+      delete (user as any).password;
+
+      return {
+        ...user,
+        };
+    } catch (error) {
+      this.handleException(error);
+    }
   }
 
-  async register(dto: CreateUserDto) {
-    const exists = await this.users.findOne({ where: { email: dto.email.toLowerCase().trim() } });
-    if (exists) throw new BadRequestException('El email ya está registrado');
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
 
-    const hash = await bcrypt.hash(dto.password, parseInt(process.env.BCRYPT_SALT_ROUNDS || '12', 10));
-
-    const user = this.users.create({
-      email: dto.email,
-      password: hash,
-      fullname: dto.fullname,
-      role: dto.role ?? 'usuario',
-      isActive: true,
+    const user = await this.userRepository.findOne({
+      where: { email: email.toLowerCase().trim() },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+        fullname: true,
+        isActive: true,
+      },
     });
-    await this.users.save(user);
 
-    const { password, ...safe } = user;
-    const token = this.signToken(user);
+    if (!user) throw new NotFoundException(`User ${email} not found`);
+    if (!user.isActive) throw new UnauthorizedException('Account is inactive');
 
-    return { user: safe, token };
+    if (!bcrypt.compareSync(password, user.password!)) {
+      throw new UnauthorizedException('Email or password incorrect');
+    }
+
+    delete (user as any).password;
+
+    return {
+      ...user,
+      token: this.getJwtToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      }),
+    };
   }
 
-  async login(dto: LoginDto) {
-    const email = dto.email.toLowerCase().trim();
+  encryptPassword(password: string) {
+    const rounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10);
+    return bcrypt.hashSync(password, rounds);
+  }
 
-    const user = await this.users.findOne({ where: { email } });
-    if (!user) throw new UnauthorizedException('Credenciales inválidas');
-    if (!user.isActive) throw new UnauthorizedException('Cuenta desactivada');
+  private getJwtToken(payload: Jwt) {
+    const token = this.jwtService.sign(payload);
+    return token;
+  }
 
-    const ok = await bcrypt.compare(dto.password, user.password);
-    if (!ok) throw new UnauthorizedException('Credenciales inválidas');
-
-    const token = this.signToken(user);
-    const { password, ...safe } = user;
-    return { user: safe, token };
+  private handleException(error: any): never {
+    this.logger.error(error);
+    if (error?.code === '23505') {
+      throw new InternalServerErrorException(error.detail);
+    }
+    throw new InternalServerErrorException('Unexpected error, check logs');
   }
 
   async check(user: User) {
     const token = this.signToken(user);
     return { user, token };
+  }
+
+  private signToken(user: User) {
+    const payload: Jwt = { id: user.id, email: user.email, role: user.role };
+    return this.jwtService.sign(payload);
   }
 }

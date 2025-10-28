@@ -30,6 +30,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 })
 export class AppModule {
   constructor() {
-    console.log('Database URL:', process.env.DATABASE_URL);
+    console.log('DATABASE_URL =>', JSON.stringify(process.env.DATABASE_URL));
+    console.log('PG* env =>', {
+      PGUSER: process.env.PGUSER,
+      PGPASSWORD: process.env.PGPASSWORD,
+    });
   }
+
 }
