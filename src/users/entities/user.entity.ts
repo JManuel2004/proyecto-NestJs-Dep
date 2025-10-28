@@ -1,5 +1,6 @@
 import { BeforeInsert, BeforeUpdate, Column, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Project } from '../../projects/entities/project.entity';
+import { Task } from '../../tasks/entities/task.entity';
 
 export type UserRole = 'superadmin' | 'usuario';
 
@@ -41,6 +42,9 @@ export class User {
 
     @OneToMany(() => Project, (project) => project.user)
     projects: Project[];
+
+    @OneToMany(() => Task, (task) => task.assignedTo)
+    assignedTasks: Task[];
 
     @DeleteDateColumn()
     deletedAt: Date;
