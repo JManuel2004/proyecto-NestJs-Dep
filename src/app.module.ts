@@ -11,14 +11,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
   
-    
     TypeOrmModule.forRoot({
-    type: 'postgres',
-    url: process.env.DATABASE_URL,
-    autoLoadEntities: true,
-    synchronize: true,
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      autoLoadEntities: true,
+      synchronize: true,
     }),
-
     UsersModule,
     TasksModule,
     ProjectsModule,
@@ -28,13 +30,4 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   providers: [],
   
 })
-export class AppModule {
-  constructor() {
-    console.log('DATABASE_URL =>', JSON.stringify(process.env.DATABASE_URL));
-    console.log('PG* env =>', {
-      PGUSER: process.env.PGUSER,
-      PGPASSWORD: process.env.PGPASSWORD,
-    });
-  }
-
-}
+export class AppModule {}

@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from '../services/users.service';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../../auth/dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { Auth } from '../../auth/decorators/auth.decorator';
 import { GetUser } from '../../auth/decorators/get-user.decorator';
