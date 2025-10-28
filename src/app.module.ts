@@ -13,6 +13,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   
     TypeOrmModule.forRoot({
       type: 'postgres',
+      // Soporte para DATABASE_URL (Render, Railway, etc.) o variables separadas (local)
+      url: process.env.DATABASE_URL,
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT || '5432', 10),
       username: process.env.DB_USER,
@@ -20,6 +22,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: true,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     }),
     UsersModule,
     TasksModule,
